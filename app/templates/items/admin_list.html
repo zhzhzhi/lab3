@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}商品审核 · 校园二手{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1 class="page-title">商品审核</h1>
+    <p class="page-sub">待审核 {{ pending_count }} 件 · 通过后自动发布，卖家不需要再操作</p>
+  </div>
+</div>
+
+{% set emoji_map = {'图书教材': '📚', '生活电器': '🧊', '数码配件': '⌨️', '交通工具': '🚲', '运动器材': '🏀'} %}
+<div class="card" style="overflow:hidden;">
+  {% if items %}
+    <table class="table">
+      <thead><tr><th style="width:34%;">商品</th><th>卖家</th><th>价格</th><th>提交时间</th><th style="width:34%;">审核</th></tr></thead>
+      <tbody>
+        {% for item in items %}
+          <tr>
+            <td>
+              <div class="item-cell">
+                <div class="thumb thumb-sm">{{ emoji_map.get(item.category.name, '📦') }}</div>
+                <div><div class="t">{{ item.name }}</div><div class="s">{{ item.category.name }}</div></div>
+              </div>
+            </td>
+            <td>{{ item.seller.nickname }}</td>
+            <td class="strong">¥{{ "%.2f"|format(item.price) }}</td>
+            <td class="small muted">{{ item.created_at.strftime('%m-%d %H:%M') }}</td>
+            <td>
+              <div class="action-group">
+                <form method="post" action="{{ url_for('admin_items.approve', item_id=item.id) }}">
+                  <button class="btn btn-primary btn-sm" type="submit">审核通过</button>
+                </form>
+                <form method="post" action="{{ url_for('admin_items.reject', item_id=item.id) }}" class="row gap-8">
+                  <input class="input" name="reason" placeholder="驳回原因" style="width:130px;height:30px;">
+                  <button class="btn btn-danger btn-sm" type="submit">驳回</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <div class="empty-state"><div class="big">✅</div><div>没有待审核商品</div></div>
+  {% endif %}
+</div>
+{% endblock %}

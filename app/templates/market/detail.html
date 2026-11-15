@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% block title %}{{ item.name }} · 校园二手{% endblock %}
+
+{% block content %}
+{% set emoji_map = {'图书教材': '📚', '生活电器': '🧊', '数码配件': '⌨️', '交通工具': '🚲', '运动器材': '🏀'} %}
+{% set emoji = emoji_map.get(item.category.name, '📦') %}
+<div class="breadcrumb">
+  <a href="{{ url_for('market.list_items') }}">商品广场</a><span class="sep">/</span>
+  <b>{{ item.category.name }}</b><span class="sep">/</span>
+  <span>{{ item.name }}</span>
+</div>
+
+<div class="detail-grid">
+  <div>
+    <div class="card gallery">
+      <div class="main-img">
+        {% if item.images and item.images[0].url and 'placeholder' not in item.images[0].url %}
+          <img src="{{ item.images[0].url }}" alt="{{ item.name }}" style="width:100%;height:100%;object-fit:cover;">
+        {% else %}
+          {{ emoji }}
+        {% endif %}
+        <span class="badge {{ 'badge-green' if item.status == 'published' else 'badge-amber' }}">{{ item.status_label }}</span>
+      </div>
+      <div class="thumbs">
+        {% for image in item.images %}
+          <div class="thumb {% if loop.first %}active{% endif %}">
+            {% if image.url and 'placeholder' not in image.url %}
+              <img src="{{ image.url }}" alt="{{ item.name }}" style="width:100%;height:100%;object-fit:cover;">
+            {% else %}
+              {{ emoji }}
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="card panel mt-16">
+      <h1 class="detail-title">{{ item.name }}</h1>
+      <div class="detail-meta">
+        <span>{{ item.category.name }}</span><span class="dot">·</span>
+        <span>发布于 {{ item.published_at.strftime('%Y-%m-%d %H:%M') if item.published_at else item.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+      </div>
+      <div class="price-lg mt-12">¥{{ "%.2f"|format(item.price) }}</div>
+
+      <div class="seller-row mt-16">
+        <div class="avatar avatar-lg">{{ item.seller.nickname[:1] }}</div>
+        <div>
+          <div class="name">{{ item.seller.nickname }}</div>
+          <div class="sub">卖家 · 已发布 {{ item.seller.items.count() }} 件商品</div>
+        </div>
+      </div>
+
+      <div class="mt-16">
+        <h3 class="section-title">商品描述</h3>
+        <p class="desc-text">{{ item.description }}</p>
+      </div>
+    </div>
+  </div>
+
+  <aside>
+    <div class="card panel booking-card">
+      <div class="row-between">
+        <span class="badge {{ 'badge-green' if item.status == 'published' else 'badge-amber' }} badge-dot">{{ item.status_label }}</span>
+        <span class="muted small">先约先得</span>
+      </div>
+      <div class="price-lg">¥{{ "%.2f"|format(item.price) }}</div>
+      <div class="alert {{ 'green' if item.status == 'published' else 'red' }}">
+        <div>
+          <div class="alert-title">当前状态：{{ item.status_label }}</div>
+          <div class="small" style="margin-top:2px;">
+            {% if item.status == 'published' %}
+              预约成功后商品会为你锁定，其他买家不能再预约。
+            {% elif item.status == 'reserved' %}
+              该商品已被预约，等待卖家确认。
+            {% else %}
+              该商品当前不可预约。
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      {% if not current_user.is_authenticated %}
+        <a class="btn btn-primary btn-lg btn-block" href="{{ url_for('auth.login', next=request.path) }}">登录后预约</a>
+      {% elif item.seller_id == current_user.id %}
+        <div class="alert green"><div class="alert-title">这是你发布的商品</div></div>
+      {% elif item.status == 'published' and current_user.is_buyer %}
+        <button class="btn btn-primary btn-lg btn-block" disabled>预约（下一阶段接入）</button>
+        <p class="hint mt-8">预约、卖家确认和 48 小时失效将在预约模块中实现。</p>
+      {% else %}
+        <button class="btn btn-ghost btn-lg btn-block" disabled>当前不可预约</button>
+      {% endif %}
+
+      <div class="steps">
+        <div class="step"><span class="num">1</span><div><b>发起预约</b>：生成一条待确认预约。</div></div>
+        <div class="step"><span class="num">2</span><div><b>卖家确认</b>：卖家在 48 小时内确认或取消。</div></div>
+        <div class="step"><span class="num">3</span><div><b>线下交付</b>：见面验货后，由买家确认交易完成。</div></div>
+      </div>
+      <p class="hint mt-12">超过 48 小时卖家未处理，预约自动失效，商品恢复在售。</p>
+    </div>
+
+    <div class="card panel mt-16">
+      <h3 class="section-title">卖家信息</h3>
+      <div class="seller-row" style="border-top:none;padding-top:0;">
+        <div class="avatar avatar-lg">{{ item.seller.nickname[:1] }}</div>
+        <div>
+          <div class="name">{{ item.seller.nickname }}</div>
+          <div class="sub">校园二手用户</div>
+        </div>
+      </div>
+      <div class="info-list mt-12">
+        <div class="row-between"><span class="k">交易方式</span><span class="v">线下自提</span></div>
+        <div class="row-between"><span class="k">联系方式</span><span class="v">确认预约后可见</span></div>
+      </div>
+      <button class="btn btn-ghost btn-block mt-12" disabled>举报商品（下一阶段）</button>
+    </div>
+  </aside>
+</div>
+{% endblock %}

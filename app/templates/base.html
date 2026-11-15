@@ -12,10 +12,15 @@
     <a class="logo" href="{{ url_for('main.index') }}"><span class="logo-mark">校</span>校园二手</a>
     <nav class="shop-nav">
       <a class="active" href="{{ url_for('main.index') }}">首页</a>
-      <a href="#">商品广场</a>
+      <a href="{{ url_for('market.list_items') }}">商品广场</a>
       <a href="#">我的预约</a>
-      <a href="#">我的商品</a>
-      <a href="#">发布商品</a>
+      {% if current_user.is_authenticated and current_user.is_seller %}
+        <a href="{{ url_for('items.list_items') }}">我的商品</a>
+        <a href="{{ url_for('items.new_item') }}">发布商品</a>
+      {% endif %}
+      {% if current_user.is_authenticated and current_user.is_admin %}
+        <a href="{{ url_for('admin_items.review_list') }}">审核</a>
+      {% endif %}
     </nav>
     <div class="user-menu">
       {% if current_user.is_authenticated %}

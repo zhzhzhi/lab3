@@ -40,7 +40,9 @@ class User(UserMixin, db.Model):
     created_at = db.Column(db.DateTime, nullable=False, default=utcnow)
 
     items = db.relationship("Item", back_populates="seller", lazy="dynamic")
-    reservations = db.relationship("Reservation", back_populates="buyer", lazy="dynamic")
+    reservations = db.relationship(
+        "Reservation", back_populates="buyer", lazy="dynamic"
+    )
     reports = db.relationship(
         "Report",
         foreign_keys="Report.reporter_id",
@@ -114,18 +116,23 @@ class Item(db.Model):
     __tablename__ = "items"
 
     id = db.Column(db.Integer, primary_key=True)
-    seller_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
-    category_id = db.Column(db.Integer, db.ForeignKey("categories.id"), nullable=False)
+    seller_id = db.Column(
+        db.Integer, db.ForeignKey("users.id"), nullable=False, index=True
+    )
+    category_id = db.Column(
+        db.Integer, db.ForeignKey("categories.id"), nullable=False, index=True
+    )
     name = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text, nullable=False)
-    price = db.Column(db.Numeric(10, 2), nullable=False)
+    price = db.Column(db.Numeric(10, 2), nullable=False, index=True)
     contact = db.Column(db.String(100), nullable=False)
     status = db.Column(
         db.String(20), nullable=False, default=ItemStatus.DRAFT.value, index=True
     )
     created_at = db.Column(db.DateTime, nullable=False, default=utcnow)
-    published_at = db.Column(db.DateTime, nullable=True)
+    published_at = db.Column(db.DateTime, nullable=True, index=True)
     off_shelf_reason = db.Column(db.String(200), nullable=True)
+    reject_reason = db.Column(db.String(200), nullable=True)
     version = db.Column(db.Integer, nullable=False, default=0)
 
     seller = db.relationship("User", back_populates="items")
@@ -144,8 +151,9 @@ class Item(db.Model):
         return ITEM_STATUS_LABELS.get(self.status, self.status)
 
     def is_visible_to(self, user: User | None) -> bool:
-        if user and (user.is_admin or user.id == self.seller_id):
-            return True
+        if user is not None and getattr(user, "is_authenticated", False):
+            if user.is_admin or user.id == self.seller_id:
+                return True
         return self.status in (ItemStatus.PUBLISHED.value, ItemStatus.RESERVED.value)
 
     def __repr__(self) -> str:
@@ -156,7 +164,9 @@ class ItemImage(db.Model):
     __tablename__ = "item_images"
 
     id = db.Column(db.Integer, primary_key=True)
-    item_id = db.Column(db.Integer, db.ForeignKey("items.id"), nullable=False, index=True)
+    item_id = db.Column(
+        db.Integer, db.ForeignKey("items.id"), nullable=False, index=True
+    )
     url = db.Column(db.String(255), nullable=False)
     sort_order = db.Column(db.Integer, nullable=False, default=0)
 
@@ -170,11 +180,18 @@ class Reservation(db.Model):
     __tablename__ = "reservations"
 
     id = db.Column(db.Integer, primary_key=True)
-    item_id = db.Column(db.Integer, db.ForeignKey("items.id"), nullable=False, index=True)
-    buyer_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
+    item_id = db.Column(
+        db.Integer, db.ForeignKey("items.id"), nullable=False, index=True
+    )
+    buyer_id = db.Column(
+        db.Integer, db.ForeignKey("users.id"), nullable=False, index=True
+    )
     request_id = db.Column(db.String(36), nullable=False, index=True)
     status = db.Column(
-        db.String(20), nullable=False, default=ReservationStatus.PENDING.value, index=True
+        db.String(20),
+        nullable=False,
+        default=ReservationStatus.PENDING.value,
+        index=True,
     )
     created_at = db.Column(db.DateTime, nullable=False, default=utcnow)
     expires_at = db.Column(db.DateTime, nullable=False)
@@ -191,9 +208,7 @@ class Reservation(db.Model):
             "uq_active_reservation_per_item",
             "item_id",
             unique=True,
-            sqlite_where=db.text(
-                "status IN ('pending', 'confirmed')"
-            ),
+            sqlite_where=db.text("status IN ('pending', 'confirmed')"),
         ),
     )
 
@@ -213,8 +228,12 @@ class Report(db.Model):
     __tablename__ = "reports"
 
     id = db.Column(db.Integer, primary_key=True)
-    reporter_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
-    item_id = db.Column(db.Integer, db.ForeignKey("items.id"), nullable=False, index=True)
+    reporter_id = db.Column(
+        db.Integer, db.ForeignKey("users.id"), nullable=False, index=True
+    )
+    item_id = db.Column(
+        db.Integer, db.ForeignKey("items.id"), nullable=False, index=True
+    )
     reason = db.Column(db.String(500), nullable=False)
     status = db.Column(
         db.String(20), nullable=False, default=ReportStatus.PENDING.value, index=True
@@ -246,7 +265,9 @@ class OperationLog(db.Model):
     __tablename__ = "operation_logs"
 
     id = db.Column(db.Integer, primary_key=True)
-    operator_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=True, index=True)
+    operator_id = db.Column(
+        db.Integer, db.ForeignKey("users.id"), nullable=True, index=True
+    )
     action_type = db.Column(db.String(50), nullable=False, index=True)
     target_type = db.Column(db.String(30), nullable=False)
     target_id = db.Column(db.Integer, nullable=True)
@@ -266,7 +287,9 @@ class IdempotencyRecord(db.Model):
     __tablename__ = "idempotency_records"
 
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
+    user_id = db.Column(
+        db.Integer, db.ForeignKey("users.id"), nullable=False, index=True
+    )
     action = db.Column(db.String(50), nullable=False)
     item_id = db.Column(db.Integer, db.ForeignKey("items.id"), nullable=True)
     request_id = db.Column(db.String(36), nullable=False)

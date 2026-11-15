@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}商品广场 · 校园二手{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1 class="page-title">商品广场</h1>
+    <p class="page-sub">共 {{ pagination.total }} 件可查看商品 · 校园内线下交易，先约先得</p>
+  </div>
+  {% if current_user.is_authenticated and current_user.is_seller %}
+    <a class="btn btn-primary" href="{{ url_for('items.new_item') }}">＋ 发布商品</a>
+  {% endif %}
+</div>
+
+<form class="filter-bar" method="get" action="{{ url_for('market.list_items') }}">
+  <input class="input grow" name="keyword" value="{{ filters.get('keyword', '') }}" placeholder="搜索商品名称、描述或卖家昵称">
+  <select class="select" name="category_id" style="width:125px;">
+    <option value="">全部分类</option>
+    {% for category in categories %}
+      <option value="{{ category.id }}" {% if filters.get('category_id') == category.id|string %}selected{% endif %}>{{ category.name }}</option>
+    {% endfor %}
+  </select>
+  <div class="price">
+    <input class="input" name="min_price" value="{{ filters.get('min_price', '') }}" placeholder="最低价">
+    <span class="muted">—</span>
+    <input class="input" name="max_price" value="{{ filters.get('max_price', '') }}" placeholder="最高价">
+  </div>
+  <select class="select" name="status" style="width:115px;">
+    <option value="">全部状态</option>
+    <option value="published" {% if filters.get('status') == 'published' %}selected{% endif %}>在售</option>
+    <option value="reserved" {% if filters.get('status') == 'reserved' %}selected{% endif %}>已预约</option>
+  </select>
+  <select class="select" name="sort" style="width:135px;">
+    <option value="newest" {% if filters.get('sort', 'newest') == 'newest' %}selected{% endif %}>最新发布</option>
+    <option value="price_asc" {% if filters.get('sort') == 'price_asc' %}selected{% endif %}>价格从低到高</option>
+    <option value="price_desc" {% if filters.get('sort') == 'price_desc' %}selected{% endif %}>价格从高到低</option>
+  </select>
+  <button class="btn btn-primary" type="submit" style="height:36px;">筛选</button>
+</form>
+
+<div class="grid-4">
+  {% set emoji_map = {'图书教材': '📚', '生活电器': '🧊', '数码配件': '⌨️', '交通工具': '🚲', '运动器材': '🏀'} %}
+  {% for item in pagination.items %}
+    {% set emoji = emoji_map.get(item.category.name, '📦') %}
+    <article class="item-card">
+      <a class="pic" href="{{ url_for('market.detail', item_id=item.id) }}">
+        {% if item.images and item.images[0].url and 'placeholder' not in item.images[0].url %}
+          <img src="{{ item.images[0].url }}" alt="{{ item.name }}">
+        {% else %}
+          {{ emoji }}
+        {% endif %}
+        <span class="badge {{ 'badge-green' if item.status == 'published' else 'badge-amber' }}">{{ item.status_label }}</span>
+        <span class="time">{{ item.published_at.strftime('%m-%d %H:%M') if item.published_at else '' }}</span>
+      </a>
+      <div class="body">
+        <div class="title">{{ item.name }}</div>
+        <div class="meta"><span>{{ item.category.name }}</span><span>·</span><span>{{ item.seller.nickname }}</span></div>
+        <div class="price">¥{{ "%.2f"|format(item.price) }}</div>
+        <div class="foot"><span>{{ item.seller.nickname }}</span><a href="{{ url_for('market.detail', item_id=item.id) }}">查看详情 →</a></div>
+      </div>
+    </article>
+  {% else %}
+    <div class="empty-state" style="grid-column:1 / -1;">
+      <div class="big">🔍</div>
+      <div>没有找到符合条件的商品</div>
+      <p class="small">换个关键词、价格区间或分类试试。</p>
+    </div>
+  {% endfor %}
+</div>
+
+{% if pagination.pages > 1 %}
+  <div class="pagination">
+    {% if pagination.has_prev %}
+      <a class="page-link" href="{{ url_for('market.list_items', page=pagination.prev_num, keyword=filters.get('keyword'), category_id=filters.get('category_id'), min_price=filters.get('min_price'), max_price=filters.get('max_price'), status=filters.get('status'), sort=filters.get('sort'), per_page=filters.get('per_page')) }}">‹</a>
+    {% endif %}
+    {% for p in pagination.iter_pages(left_edge=1, left_current=1, right_current=2, right_edge=1) %}
+      {% if p %}
+        <a class="page-link {% if p == pagination.page %}active{% endif %}" href="{{ url_for('market.list_items', page=p, keyword=filters.get('keyword'), category_id=filters.get('category_id'), min_price=filters.get('min_price'), max_price=filters.get('max_price'), status=filters.get('status'), sort=filters.get('sort'), per_page=filters.get('per_page')) }}">{{ p }}</a>
+      {% else %}
+        <span class="muted">…</span>
+      {% endif %}
+    {% endfor %}
+    {% if pagination.has_next %}
+      <a class="page-link" href="{{ url_for('market.list_items', page=pagination.next_num, keyword=filters.get('keyword'), category_id=filters.get('category_id'), min_price=filters.get('min_price'), max_price=filters.get('max_price'), status=filters.get('status'), sort=filters.get('sort'), per_page=filters.get('per_page')) }}">›</a>
+    {% endif %}
+  </div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% block title %}我的商品 · 校园二手{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1 class="page-title">我的商品</h1>
+    <p class="page-sub">管理草稿、审核、在售和已完成的商品</p>
+  </div>
+  <a class="btn btn-primary" href="{{ url_for('items.new_item') }}">＋ 发布商品</a>
+</div>
+
+{% set total = counts.values() | sum %}
+<div class="stat-row five">
+  <div class="stat"><div class="label">全部商品</div><div class="value">{{ total }}</div><div class="delta">共 {{ total }} 件</div></div>
+  <div class="stat"><div class="label">待审核</div><div class="value" style="color:var(--amber);">{{ counts.get('pending', 0) }}</div><div class="delta warn">等待管理员处理</div></div>
+  <div class="stat"><div class="label">已发布</div><div class="value" style="color:var(--green-700);">{{ counts.get('published', 0) }}</div><div class="delta">公开可见</div></div>
+  <div class="stat"><div class="label">已预约</div><div class="value" style="color:var(--blue);">{{ counts.get('reserved', 0) }}</div><div class="delta">等待处理</div></div>
+  <div class="stat"><div class="label">已完成</div><div class="value">{{ counts.get('completed', 0) }}</div><div class="delta">交易记录已保留</div></div>
+</div>
+
+{% if counts.get('rejected', 0) %}
+  <div class="alert mb-16">
+    <div>
+      <div class="alert-title">有 {{ counts.get('rejected') }} 件商品被驳回</div>
+      <div class="small" style="margin-top:2px;">修改后可以重新提交审核，不需要重新创建商品。</div>
+    </div>
+  </div>
+{% endif %}
+
+<div class="tabs mb-16">
+  <a class="tab {% if not selected_status %}active{% endif %}" href="{{ url_for('items.list_items') }}">全部 {{ total }}</a>
+  <a class="tab {% if selected_status == 'draft' %}active{% endif %}" href="{{ url_for('items.list_items', status='draft') }}">草稿 {{ counts.get('draft', 0) }}</a>
+  <a class="tab {% if selected_status == 'pending' %}active{% endif %}" href="{{ url_for('items.list_items', status='pending') }}">待审核 {{ counts.get('pending', 0) }}</a>
+  <a class="tab {% if selected_status == 'published' %}active{% endif %}" href="{{ url_for('items.list_items', status='published') }}">已发布 {{ counts.get('published', 0) }}</a>
+  <a class="tab {% if selected_status == 'reserved' %}active{% endif %}" href="{{ url_for('items.list_items', status='reserved') }}">已预约 {{ counts.get('reserved', 0) }}</a>
+  <a class="tab {% if selected_status == 'rejected' %}active{% endif %}" href="{{ url_for('items.list_items', status='rejected') }}">已驳回 {{ counts.get('rejected', 0) }}</a>
+</div>
+
+{% set emoji_map = {'图书教材': '📚', '生活电器': '🧊', '数码配件': '⌨️', '交通工具': '🚲', '运动器材': '🏀'} %}
+<div class="card" style="overflow:hidden;">
+  {% if items %}
+    <table class="table">
+      <thead>
+        <tr>
+          <th style="width:36%;">商品</th>
+          <th>分类</th>
+          <th>价格</th>
+          <th>状态</th>
+          <th>更新时间</th>
+          <th style="width:24%;">操作</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in items %}
+          <tr>
+            <td>
+              <div class="item-cell">
+                <div class="thumb thumb-sm">
+                  {% if item.images and item.images[0].url and 'placeholder' not in item.images[0].url %}
+                    <img src="{{ item.images[0].url }}" alt="{{ item.name }}" style="width:100%;height:100%;object-fit:cover;border-radius:8px;">
+                  {% else %}
+                    {{ emoji_map.get(item.category.name, '📦') }}
+                  {% endif %}
+                </div>
+                <div>
+                  <div class="t">{{ item.name }}</div>
+                  <div class="s">
+                    {% if item.status == 'rejected' and item.reject_reason %}
+                      <span style="color:var(--red);">驳回原因：{{ item.reject_reason }}</span>
+                    {% elif item.status == 'off_shelf' and item.off_shelf_reason %}
+                      下架原因：{{ item.off_shelf_reason }}
+                    {% else %}
+                      {{ item.created_at.strftime('%m-%d %H:%M') }} 创建
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+            </td>
+            <td>{{ item.category.name }}</td>
+            <td class="strong">¥{{ "%.2f"|format(item.price) }}</td>
+            <td><span class="badge badge-{{ 'green' if item.status in ('published', 'completed') else ('amber' if item.status in ('pending', 'reserved', 'confirmed') else ('red' if item.status in ('rejected', 'off_shelf') else 'gray')) }} badge-dot">{{ item.status_label }}</span></td>
+            <td class="small muted">{{ item.created_at.strftime('%m-%d %H:%M') }}</td>
+            <td>
+              <div class="action-group">
+                {% if item.status == 'draft' %}
+                  <a class="btn btn-soft btn-sm" href="{{ url_for('items.edit_item', item_id=item.id) }}">编辑</a>
+                  <form method="post" action="{{ url_for('items.submit_item', item_id=item.id) }}"><button class="btn btn-primary btn-sm" type="submit">提交审核</button></form>
+                {% elif item.status == 'pending' %}
+                  <form method="post" action="{{ url_for('items.withdraw_item', item_id=item.id) }}"><button class="btn btn-ghost btn-sm" type="submit">撤回审核</button></form>
+                {% elif item.status == 'published' %}
+                  <a class="btn btn-soft btn-sm" href="{{ url_for('market.detail', item_id=item.id) }}">查看</a>
+                  <form method="post" action="{{ url_for('items.off_shelf_item', item_id=item.id) }}">
+                    <input type="hidden" name="reason" value="卖家下架">
+                    <button class="btn btn-ghost btn-sm" type="submit">下架</button>
+                  </form>
+                {% elif item.status in ('reserved', 'confirmed') %}
+                  <span class="badge badge-amber">处理预约（下一阶段）</span>
+                {% elif item.status == 'rejected' %}
+                  <a class="btn btn-primary btn-sm" href="{{ url_for('items.edit_item', item_id=item.id) }}">修改后重新提交</a>
+                {% elif item.status == 'off_shelf' %}
+                  <form method="post" action="{{ url_for('items.to_draft_item', item_id=item.id) }}"><button class="btn btn-soft btn-sm" type="submit">转回草稿</button></form>
+                {% elif item.status == 'completed' %}
+                  <a class="btn btn-ghost btn-sm" href="{{ url_for('market.detail', item_id=item.id) }}">查看详情</a>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <div class="empty-state">
+      <div class="big">📦</div>
+      <div>还没有商品</div>
+      <p class="small">先发布一件闲置物品吧。</p>
+      <a class="btn btn-primary mt-8" href="{{ url_for('items.new_item') }}">发布商品</a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

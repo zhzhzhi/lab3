@@ -13,7 +13,9 @@ from app.models import User
 
 
 def test_register_and_authenticate(app):
-    user = register_user("alice", "Alice", "password123", "wx:alice", ["buyer", "seller"])
+    user = register_user(
+        "alice", "Alice", "password123", "wx:alice", ["buyer", "seller"]
+    )
     assert user.id is not None
     assert user.has_role(Role.BUYER)
     assert user.has_role(Role.SELLER)

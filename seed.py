@@ -9,7 +9,13 @@ from app.models import Category, Item, ItemImage, Reservation, User
 
 
 def _user(account, nickname, password, roles, status=UserStatus.ACTIVE.value):
-    user = User(account=account, nickname=nickname, contact="微信：demo", roles=roles, status=status)
+    user = User(
+        account=account,
+        nickname=nickname,
+        contact="微信：demo",
+        roles=roles,
+        status=status,
+    )
     user.set_password(password)
     return user
 
@@ -20,9 +26,15 @@ def seed_data() -> None:
 
     admin = _user("admin", "管理员", "admin12345", [Role.ADMIN.value])
     buyer = _user("buyer01", "小陈", "buyer12345", [Role.BUYER.value])
-    seller = _user("seller01", "林同学", "seller12345", [Role.SELLER.value, Role.BUYER.value])
+    seller = _user(
+        "seller01", "林同学", "seller12345", [Role.SELLER.value, Role.BUYER.value]
+    )
     disabled = _user(
-        "disabled01", "被禁用用户", "disabled12345", [Role.BUYER.value], UserStatus.DISABLED.value
+        "disabled01",
+        "被禁用用户",
+        "disabled12345",
+        [Role.BUYER.value],
+        UserStatus.DISABLED.value,
     )
     db.session.add_all([admin, buyer, seller, disabled])
     db.session.flush()
@@ -76,7 +88,9 @@ def seed_data() -> None:
     db.session.flush()
 
     for item in items:
-        db.session.add(ItemImage(item_id=item.id, url="/static/img/placeholder.png", sort_order=0))
+        db.session.add(
+            ItemImage(item_id=item.id, url="/static/img/placeholder.png", sort_order=0)
+        )
 
     book_item = items[0]
     reservation = Reservation(

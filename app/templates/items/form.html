@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% block title %}{{ '编辑商品' if item else '发布商品' }} · 校园二手{% endblock %}
+
+{% block content %}
+{% set is_edit = item is not none %}
+<div class="page-head">
+  <div>
+    <h1 class="page-title">{{ '编辑商品' if is_edit else '发布商品' }}</h1>
+    <p class="page-sub">{{ '修改后保存草稿，或重新提交审核' if is_edit else '填写信息后保存草稿，确认无误再提交审核' }}</p>
+  </div>
+  <a class="btn btn-ghost" href="{{ url_for('items.list_items') }}">← 返回我的商品</a>
+</div>
+
+{% if item and item.status == 'rejected' and item.reject_reason %}
+  <div class="alert red mb-16">
+    <div>
+      <div class="alert-title">上次审核被驳回</div>
+      <div class="small" style="margin-top:2px;">{{ item.reject_reason }}</div>
+    </div>
+  </div>
+{% endif %}
+
+<div class="form-layout">
+  <div class="card">
+    <form method="post" enctype="multipart/form-data"
+          action="{{ url_for('items.edit_item', item_id=item.id) if is_edit else url_for('items.new_item') }}">
+      <div class="form-section">
+        <h3 class="section-title">基本信息</h3>
+        <div class="form-grid" style="grid-template-columns:2fr 1fr;">
+          <div class="field">
+            <label>商品名称 <span class="hint">（2–100 个字符）</span></label>
+            <input class="input" name="name" value="{{ form.get('name', item.name if item else '') }}" required>
+          </div>
+          <div class="field">
+            <label>分类</label>
+            <select class="select" name="category_id" required>
+              <option value="">请选择分类</option>
+              {% for category in categories %}
+                <option value="{{ category.id }}"
+                  {% if (form.get('category_id') == category.id|string) or (item and item.category_id == category.id) %}selected{% endif %}>
+                  {{ category.name }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <div class="form-grid mt-8" style="grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="field">
+            <label>价格</label>
+            <div class="row" style="gap:6px;">
+              <span class="muted" style="font-size:16px;">¥</span>
+              {% set price_value = form.get('price') if form.get('price') is not none else ('%.2f'|format(item.price) if item else '') %}
+              <input class="input" name="price" value="{{ price_value }}" placeholder="例如 28.00" required>
+            </div>
+            <div class="hint">大于 0，不超过 1000000，最多两位小数。</div>
+          </div>
+          <div class="field">
+            <label>联系方式</label>
+            <input class="input" name="contact" value="{{ form.get('contact', item.contact if item else '') }}" placeholder="微信或手机号" required>
+            <div class="hint">确认预约后向买家展示。</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <h3 class="section-title">商品描述</h3>
+        <textarea class="textarea" name="description" style="height:90px;" required>{{ form.get('description', item.description if item else '') }}</textarea>
+        <div class="hint">10–2000 个字符，写清成色、瑕疵和交易方式。</div>
+      </div>
+
+      <div class="form-section">
+        <h3 class="section-title">商品图片 <span class="hint" style="font-weight:400;">（1–9 张，JPG / PNG / WebP，单张 ≤ 5 MB）</span></h3>
+        {% if item and item.images %}
+          <div class="image-row">
+            {% for image in item.images %}
+              <div>
+                <div class="thumb">
+                  {% if image.url and 'placeholder' not in image.url %}
+                    <img src="{{ image.url }}" alt="{{ item.name }}">
+                  {% else %}
+                    🖼️
+                  {% endif %}
+                </div>
+                <label><input type="checkbox" name="keep_image" value="{{ image.id }}" checked> 保留</label>
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+        <input type="file" name="images" accept=".jpg,.jpeg,.png,.webp,image/*" multiple>
+        <div class="hint mt-8">取消勾选可删除已有图片；新上传的图片会追加到后面。</div>
+      </div>
+
+      <div class="form-actions">
+        <a class="btn btn-ghost" href="{{ url_for('items.list_items') }}">取消</a>
+        <button class="btn btn-soft" type="submit" name="action" value="draft">保存草稿</button>
+        <button class="btn btn-primary" type="submit" name="action" value="submit">提交审核</button>
+      </div>
+    </form>
+  </div>
+
+  <aside>
+    <div class="card panel">
+      <h3 class="section-title">发布前检查</h3>
+      <div class="steps" style="margin-top:2px;gap:8px;">
+        <div class="step"><span class="num">✓</span><div>名称能让人一眼看出是什么。</div></div>
+        <div class="step"><span class="num">✓</span><div>价格真实，不发布免费商品。</div></div>
+        <div class="step"><span class="num">✓</span><div>图片至少 1 张，能看清成色。</div></div>
+        <div class="step"><span class="num">✓</span><div>描述写清瑕疵和交易地点。</div></div>
+      </div>
+    </div>
+    <div class="card panel mt-16">
+      <h3 class="section-title">审核规则</h3>
+      <div class="info-list">
+        <div class="row-between"><span class="k">审核通过</span><span class="v">自动上架</span></div>
+        <div class="row-between"><span class="k">审核驳回</span><span class="v">修改后重提</span></div>
+        <div class="row-between"><span class="k">待审核期间</span><span class="v">不能修改</span></div>
+      </div>
+    </div>
+  </aside>
+</div>
+{% endblock %}

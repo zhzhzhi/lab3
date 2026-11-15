@@ -30,10 +30,15 @@ def create_app(config_object: type[Config] | None = None) -> Flask:
             return None
 
     from .auth.routes import auth_bp
+    from .items.routes import admin_items_bp, items_bp
     from .main.routes import main_bp
+    from .market.routes import market_bp
 
     app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp, url_prefix="/auth")
+    app.register_blueprint(market_bp)
+    app.register_blueprint(items_bp)
+    app.register_blueprint(admin_items_bp)
 
     register_error_handlers(app)
     register_cli(app)
@@ -68,3 +73,13 @@ def register_cli(app: Flask) -> None:
 
         seed_data()
         click.echo("示例数据已写入。")
+
+    @app.cli.command("reset-db")
+    def reset_db_command() -> None:
+        """Drop, recreate and seed the database."""
+        from seed import seed_data
+
+        db.drop_all()
+        db.create_all()
+        seed_data()
+        click.echo("数据库已重置并写入示例数据。")
