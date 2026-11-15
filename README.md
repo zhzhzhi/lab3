@@ -11,8 +11,7 @@ python -m venv .venv
 .venv/Scripts/activate        # Windows Git Bash 也可直接调用 .venv/Scripts/python.exe
 pip install -r requirements.txt
 
-flask --app run.py init-db
-flask --app run.py seed
+flask --app run.py reset-db   # 第一次或改了模型后：重建并写入示例数据
 flask --app run.py run --debug
 ```
 
@@ -56,9 +55,9 @@ run.py              # 开发入口
 - [x] 应用工厂、配置、数据库模型、枚举
 - [x] 注册/登录/登出、角色、登录锁定
 - [x] 健康检查、初始化与种子数据
-- [ ] 商品管理
-- [ ] 商品查询
-- [ ] 预约与交易
+- [x] 商品管理
+- [x] 商品查询
+- [ ] 预约与交易（下一阶段）
 - [ ] 举报、用户治理、日志与统计
 - [ ] 管理后台页面
 - [ ] 代码风格与测试收尾
