@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>注册 · 校园二手</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/common.css') }}">
+</head>
+<body>
+<div class="auth-page">
+  <section class="auth-left">
+    <div class="brand"><div class="brand-mark">校</div>校园二手</div>
+    <h1>把闲置<br>交给需要的人</h1>
+    <p class="lead">注册一个账号，既可以买，也可以卖。</p>
+    <div class="auth-points">
+      <div class="auth-point"><div class="dot">1</div><div>一个账号，两种身份<small>买家和卖家角色可以同时拥有</small></div></div>
+      <div class="auth-point"><div class="dot">2</div><div>先约先得<small>同一商品同时只有一条有效预约</small></div></div>
+      <div class="auth-point"><div class="dot">3</div><div>管理员兜底<small>举报、仲裁和禁用都有记录</small></div></div>
+    </div>
+  </section>
+
+  <section class="auth-right">
+    <div class="auth-box">
+      <div class="auth-tabs">
+        <a class="auth-tab-link" href="{{ url_for('auth.login') }}">登录</a>
+        <button class="active">注册</button>
+      </div>
+      <h2>创建账号</h2>
+      <p class="sub">注册后可以发布商品，也可以预约别人的商品。</p>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="alert {{ 'red' if category == 'error' else 'green' }} mb-12">{{ message }}</div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      <form class="auth-form" method="post" action="{{ url_for('auth.register') }}">
+        <div class="field">
+          <label>账号</label>
+          <input class="input" name="account" placeholder="学号或昵称，登录时使用" required>
+        </div>
+        <div class="field">
+          <label>昵称</label>
+          <input class="input" name="nickname" placeholder="显示给其他用户" required>
+        </div>
+        <div class="field">
+          <label>密码</label>
+          <input class="input" type="password" name="password" placeholder="至少 8 位" required>
+        </div>
+        <div class="field">
+          <label>确认密码</label>
+          <input class="input" type="password" name="confirm" placeholder="再输入一次" required>
+        </div>
+        <div class="field">
+          <label>联系方式</label>
+          <input class="input" name="contact" placeholder="微信或手机号，确认交易后展示">
+        </div>
+        <div class="field">
+          <label>身份</label>
+          <div class="row gap-16">
+            <label class="checkbox"><input type="checkbox" name="roles" value="buyer" checked> 买家</label>
+            <label class="checkbox"><input type="checkbox" name="roles" value="seller"> 卖家</label>
+          </div>
+          <div class="hint">可以同时选择买家和卖家；管理员账号由系统初始化。</div>
+        </div>
+        <button class="btn btn-primary btn-lg btn-block" type="submit">注册</button>
+        <p class="muted small" style="text-align:center;margin:2px 0 0;">已有账号？<a style="color:var(--green-700);font-weight:700;" href="{{ url_for('auth.login') }}">直接登录</a></p>
+      </form>
+    </div>
+  </section>
+</div>
+</body>
+</html>

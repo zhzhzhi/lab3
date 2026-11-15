@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>登录 · 校园二手</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/common.css') }}">
+</head>
+<body>
+<div class="auth-page">
+  <section class="auth-left">
+    <div class="brand"><div class="brand-mark">校</div>校园二手</div>
+    <h1>让闲置<br>流动起来</h1>
+    <p class="lead">查商品、约见面、确认交易，都在一个地方说清楚。</p>
+    <div class="auth-points">
+      <div class="auth-point"><div class="dot">1</div><div>预约后锁定商品<small>同一件商品同一时间只有一个人约到</small></div></div>
+      <div class="auth-point"><div class="dot">2</div><div>线下交易，线上记录<small>不碰支付和物流，只记录意向和结果</small></div></div>
+      <div class="auth-point"><div class="dot">3</div><div>管理员审核与仲裁<small>违规商品下架，交易纠纷有处理入口</small></div></div>
+    </div>
+  </section>
+
+  <section class="auth-right">
+    <div class="auth-box">
+      <div class="auth-tabs">
+        <button class="active">登录</button>
+        <a class="auth-tab-link" href="{{ url_for('auth.register') }}">注册</a>
+      </div>
+      <h2>欢迎回来</h2>
+      <p class="sub">登录后可以发布商品、预约和确认交易。</p>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="alert {{ 'red' if category == 'error' else 'green' }} mb-12">{{ message }}</div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      <form class="auth-form" method="post" action="{{ url_for('auth.login', next=request.args.get('next')) }}">
+        <div class="field">
+          <label>账号</label>
+          <input class="input" name="account" value="{{ account or '' }}" placeholder="请输入账号" required>
+        </div>
+        <div class="field">
+          <label>密码</label>
+          <input class="input" type="password" name="password" placeholder="请输入密码" required>
+        </div>
+        <div class="row-between">
+          <label class="checkbox"><input type="checkbox" name="remember"> 记住我</label>
+        </div>
+        <button class="btn btn-primary btn-lg btn-block" type="submit">登录</button>
+        <div class="divider">还没有账号</div>
+        <a class="btn btn-ghost btn-block" href="{{ url_for('auth.register') }}">注册买家 / 卖家账号</a>
+      </form>
+    </div>
+  </section>
+</div>
+</body>
+</html>

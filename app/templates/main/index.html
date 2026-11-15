@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}首页 · 校园二手交易系统{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1 class="page-title">校园二手交易系统</h1>
+    <p class="page-sub">软件工程实验三 · Flask + SQLite 实现</p>
+  </div>
+  {% if current_user.is_authenticated %}
+    <span class="badge badge-green">已登录</span>
+  {% else %}
+    <a class="btn btn-primary" href="{{ url_for('auth.login') }}">登录开始</a>
+  {% endif %}
+</div>
+
+<div class="grid-3">
+  <div class="card panel">
+    <h3 class="section-title">商品管理</h3>
+    <p class="desc-text">卖家创建草稿、提交审核、查看审核结果，并管理上架、下架和重新提交。</p>
+  </div>
+  <div class="card panel">
+    <h3 class="section-title">预约交易</h3>
+    <p class="desc-text">买家预约商品，卖家确认，线下交付后由买家确认完成；48 小时未处理自动失效。</p>
+  </div>
+  <div class="card panel">
+    <h3 class="section-title">管理员治理</h3>
+    <p class="desc-text">审核商品、处理举报、仲裁交易、禁用用户，并查询操作日志和统计。</p>
+  </div>
+</div>
+
+{% if current_user.is_authenticated %}
+<div class="card panel mt-16">
+  <div class="row-between">
+    <div>
+      <h3 class="section-title" style="margin-bottom:4px;">当前账号</h3>
+      <p class="muted small" style="margin:0;">
+        {{ current_user.nickname }}（{{ current_user.account }}）·
+        {{ current_user.role_labels | join(' / ') }}
+      </p>
+    </div>
+    <a class="btn btn-soft" href="{{ url_for('auth.logout') }}">退出登录</a>
+  </div>
+</div>
+{% else %}
+<div class="card panel mt-16">
+  <h3 class="section-title">开始使用</h3>
+  <p class="muted small">还没有账号？先注册一个买家/卖家账号，管理员账号由种子数据提供。</p>
+  <div class="row gap-8 mt-8">
+    <a class="btn btn-primary" href="{{ url_for('auth.register') }}">注册</a>
+    <a class="btn btn-ghost" href="{{ url_for('auth.login') }}">已有账号，登录</a>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

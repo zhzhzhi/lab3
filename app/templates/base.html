@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}校园二手交易系统{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/common.css') }}">
+</head>
+<body>
+<div class="shop-page">
+  <header class="shop-header">
+    <a class="logo" href="{{ url_for('main.index') }}"><span class="logo-mark">校</span>校园二手</a>
+    <nav class="shop-nav">
+      <a class="active" href="{{ url_for('main.index') }}">首页</a>
+      <a href="#">商品广场</a>
+      <a href="#">我的预约</a>
+      <a href="#">我的商品</a>
+      <a href="#">发布商品</a>
+    </nav>
+    <div class="user-menu">
+      {% if current_user.is_authenticated %}
+        <div class="avatar">{{ current_user.nickname[:1] }}</div>
+        <div>
+          <div class="name">{{ current_user.nickname }}</div>
+          <div class="tiny muted">{{ current_user.role_labels | join(' · ') }}</div>
+        </div>
+        <a class="btn btn-ghost btn-sm" href="{{ url_for('auth.logout') }}">退出</a>
+      {% else %}
+        <a class="btn btn-ghost btn-sm" href="{{ url_for('auth.login') }}">登录</a>
+        <a class="btn btn-primary btn-sm" href="{{ url_for('auth.register') }}">注册</a>
+      {% endif %}
+    </div>
+  </header>
+
+  <main class="shop-main">
+    <div class="content">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div class="mb-16">
+            {% for category, message in messages %}
+              <div class="alert {{ 'red' if category == 'error' else 'green' }} mb-8">{{ message }}</div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+      {% block content %}{% endblock %}
+    </div>
+  </main>
+</div>
+</body>
+</html>
