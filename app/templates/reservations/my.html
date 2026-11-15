@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}我的预约 · 校园二手{% endblock %}
+
+{% block content %}
+{% set badge = {'pending': 'blue', 'confirmed': 'amber', 'completed': 'green', 'cancelled': 'gray', 'expired': 'red'} %}
+<div class="page-head">
+  <div>
+    <h1 class="page-title">我的预约</h1>
+    <p class="page-sub">卖家确认后线下交付，交付完成请主动确认收货</p>
+  </div>
+  <a class="btn btn-ghost" href="{{ url_for('market.list_items') }}">去商品广场</a>
+</div>
+
+<div class="stat-row five">
+  <div class="stat"><div class="label">待确认</div><div class="value" style="color:var(--blue);">{{ counts.get('pending', 0) }}</div><div class="delta">等待卖家处理</div></div>
+  <div class="stat"><div class="label">已确认</div><div class="value" style="color:var(--amber);">{{ counts.get('confirmed', 0) }}</div><div class="delta">待线下交付</div></div>
+  <div class="stat"><div class="label">已完成</div><div class="value" style="color:var(--green-700);">{{ counts.get('completed', 0) }}</div><div class="delta">交易记录已保留</div></div>
+  <div class="stat"><div class="label">已取消</div><div class="value">{{ counts.get('cancelled', 0) }}</div><div class="delta">主动取消</div></div>
+  <div class="stat"><div class="label">已失效</div><div class="value" style="color:var(--red);">{{ counts.get('expired', 0) }}</div><div class="delta">超 48 小时未确认</div></div>
+</div>
+
+<div class="tabs mb-16">
+  <a class="tab {% if not selected_status %}active{% endif %}" href="{{ url_for('reservations.my_reservations') }}">全部</a>
+  <a class="tab {% if selected_status == 'pending' %}active{% endif %}" href="{{ url_for('reservations.my_reservations', status='pending') }}">待确认 {{ counts.get('pending', 0) }}</a>
+  <a class="tab {% if selected_status == 'confirmed' %}active{% endif %}" href="{{ url_for('reservations.my_reservations', status='confirmed') }}">已确认 {{ counts.get('confirmed', 0) }}</a>
+  <a class="tab {% if selected_status == 'completed' %}active{% endif %}" href="{{ url_for('reservations.my_reservations', status='completed') }}">已完成 {{ counts.get('completed', 0) }}</a>
+  <a class="tab {% if selected_status == 'cancelled' %}active{% endif %}" href="{{ url_for('reservations.my_reservations', status='cancelled') }}">已取消 {{ counts.get('cancelled', 0) }}</a>
+  <a class="tab {% if selected_status == 'expired' %}active{% endif %}" href="{{ url_for('reservations.my_reservations', status='expired') }}">已失效 {{ counts.get('expired', 0) }}</a>
+</div>
+
+<div class="card" style="overflow:hidden;">
+  {% if reservations %}
+    <table class="table">
+      <thead>
+        <tr>
+          <th style="width:30%;">商品</th>
+          <th>卖家</th>
+          <th>价格</th>
+          <th>状态</th>
+          <th>发起时间</th>
+          <th>处理期限</th>
+          <th style="width:20%;">操作</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for reservation in reservations %}
+          <tr>
+            <td>
+              <div class="t"><a href="{{ url_for('market.detail', item_id=reservation.item_id) }}">{{ reservation.item.name }}</a></div>
+              <div class="s">{{ reservation.item.category.name }}</div>
+            </td>
+            <td>{{ reservation.item.seller.nickname }}</td>
+            <td class="strong">¥{{ "%.2f"|format(reservation.item.price) }}</td>
+            <td>
+              <span class="badge badge-{{ badge.get(reservation.status, 'gray') }} badge-dot">{{ reservation.status_label }}</span>
+              {% if reservation.status == 'cancelled' and reservation.cancel_reason %}
+                <div class="tiny muted mt-4">{{ reservation.cancel_reason }}</div>
+              {% endif %}
+            </td>
+            <td class="small muted">{{ reservation.created_at.strftime('%m-%d %H:%M') }}</td>
+            <td class="small muted">{{ reservation.expires_at.strftime('%m-%d %H:%M') }}</td>
+            <td>
+              <div class="action-group">
+                {% if reservation.status == 'pending' %}
+                  <form method="post" action="{{ url_for('reservations.cancel', reservation_id=reservation.id) }}">
+                    <input type="hidden" name="reason" value="买家取消">
+                    <button class="btn btn-ghost btn-sm" type="submit">取消预约</button>
+                  </form>
+                {% elif reservation.status == 'confirmed' %}
+                  <form method="post" action="{{ url_for('reservations.complete', reservation_id=reservation.id) }}">
+                    <button class="btn btn-primary btn-sm" type="submit">确认完成</button>
+                  </form>
+                  <form method="post" action="{{ url_for('reservations.cancel', reservation_id=reservation.id) }}">
+                    <input type="hidden" name="reason" value="买家取消">
+                    <button class="btn btn-ghost btn-sm" type="submit">取消</button>
+                  </form>
+                {% else %}
+                  <a class="btn btn-soft btn-sm" href="{{ url_for('market.detail', item_id=reservation.item_id) }}">查看商品</a>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <div class="empty-state">
+      <div class="big">🗓️</div>
+      <div>还没有预约记录</div>
+      <p class="small">在商品广场挑选一件闲置，发起预约吧。</p>
+      <a class="btn btn-primary mt-8" href="{{ url_for('market.list_items') }}">去逛逛</a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

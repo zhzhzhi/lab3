@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}预约详情 · 校园二手{% endblock %}
+
+{% block content %}
+{% set badge = {'pending': 'blue', 'confirmed': 'amber', 'completed': 'green', 'cancelled': 'gray', 'expired': 'red'} %}
+<div class="breadcrumb">
+  <a href="{{ url_for('reservations.my_reservations') }}">我的预约</a><span class="sep">/</span>
+  <span>{{ reservation.item.name }}</span>
+</div>
+
+<div class="grid-2">
+  <div class="card panel">
+    <h1 class="detail-title">{{ reservation.item.name }}</h1>
+    <div class="detail-meta">
+      <span>{{ reservation.item.category.name }}</span><span class="dot">·</span>
+      <span>卖家 {{ reservation.item.seller.nickname }}</span>
+    </div>
+    <div class="price-lg mt-12">¥{{ "%.2f"|format(reservation.item.price) }}</div>
+    <p class="desc-text mt-12">{{ reservation.item.description }}</p>
+  </div>
+
+  <div class="card panel">
+    <div class="row-between">
+      <h3 class="section-title" style="margin:0;">预约信息</h3>
+      <span class="badge badge-{{ badge.get(reservation.status, 'gray') }} badge-dot">{{ reservation.status_label }}</span>
+    </div>
+    <div class="info-list mt-12">
+      <div class="row-between"><span class="k">预约编号</span><span class="v">#{{ reservation.id }}</span></div>
+      <div class="row-between"><span class="k">发起时间</span><span class="v">{{ reservation.created_at.strftime('%Y-%m-%d %H:%M') }}</span></div>
+      <div class="row-between"><span class="k">处理期限</span><span class="v">{{ reservation.expires_at.strftime('%Y-%m-%d %H:%M') }}</span></div>
+      {% if reservation.seller_handled_at %}
+        <div class="row-between"><span class="k">卖家处理时间</span><span class="v">{{ reservation.seller_handled_at.strftime('%Y-%m-%d %H:%M') }}</span></div>
+      {% endif %}
+      {% if reservation.completed_at %}
+        <div class="row-between"><span class="k">完成时间</span><span class="v">{{ reservation.completed_at.strftime('%Y-%m-%d %H:%M') }}</span></div>
+      {% endif %}
+      {% if reservation.cancel_reason %}
+        <div class="row-between"><span class="k">取消原因</span><span class="v">{{ reservation.cancel_reason }}</span></div>
+      {% endif %}
+      {% if reservation.status in ('confirmed', 'completed') %}
+        <div class="row-between"><span class="k">卖家联系方式</span><span class="v">{{ reservation.item.contact }}</span></div>
+      {% endif %}
+    </div>
+
+    <div class="action-group mt-16">
+      {% if reservation.status == 'pending' %}
+        <form method="post" action="{{ url_for('reservations.cancel', reservation_id=reservation.id) }}">
+          <input type="hidden" name="reason" value="买家取消">
+          <button class="btn btn-ghost" type="submit">取消预约</button>
+        </form>
+      {% elif reservation.status == 'confirmed' %}
+        <form method="post" action="{{ url_for('reservations.complete', reservation_id=reservation.id) }}">
+          <button class="btn btn-primary" type="submit">确认交易完成</button>
+        </form>
+      {% endif %}
+      <a class="btn btn-soft" href="{{ url_for('market.detail', item_id=reservation.item_id) }}">查看商品</a>
+    </div>
+    <p class="hint mt-12">超过处理期限卖家仍未确认，预约会自动失效，商品恢复在售。</p>
+  </div>
+</div>
+{% endblock %}

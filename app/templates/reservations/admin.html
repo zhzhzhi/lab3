@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}交易仲裁 · 校园二手{% endblock %}
+
+{% block content %}
+{% set badge = {'pending': 'blue', 'confirmed': 'amber', 'completed': 'green', 'cancelled': 'gray', 'expired': 'red'} %}
+<div class="page-head">
+  <div>
+    <h1 class="page-title">交易仲裁</h1>
+    <p class="page-sub">买卖双方协商不成时，由管理员判定交易完成或取消</p>
+  </div>
+  <a class="btn btn-ghost" href="{{ url_for('admin_items.review_list') }}">商品审核</a>
+</div>
+
+<div class="alert mb-16">
+  <div>
+    <div class="alert-title">仲裁规则</div>
+    <div class="small" style="margin-top:2px;">判定“完成”会把订单和商品置为已完成；判定“取消”会让商品恢复在售。仲裁记录写入操作日志，不可撤销。</div>
+  </div>
+</div>
+
+<div class="tabs mb-16">
+  <a class="tab {% if not selected_status %}active{% endif %}" href="{{ url_for('admin_reservations.admin_list') }}">全部</a>
+  <a class="tab {% if selected_status == 'pending' %}active{% endif %}" href="{{ url_for('admin_reservations.admin_list', status='pending') }}">待确认</a>
+  <a class="tab {% if selected_status == 'confirmed' %}active{% endif %}" href="{{ url_for('admin_reservations.admin_list', status='confirmed') }}">已确认</a>
+</div>
+
+<div class="card" style="overflow:hidden;">
+  {% if reservations %}
+    <table class="table">
+      <thead>
+        <tr>
+          <th style="width:26%;">商品</th>
+          <th>卖家</th>
+          <th>买家</th>
+          <th>状态</th>
+          <th>发起时间</th>
+          <th style="width:26%;">仲裁</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for reservation in reservations %}
+          <tr>
+            <td>
+              <div class="t"><a href="{{ url_for('market.detail', item_id=reservation.item_id) }}">{{ reservation.item.name }}</a></div>
+              <div class="s">¥{{ "%.2f"|format(reservation.item.price) }}</div>
+            </td>
+            <td>{{ reservation.item.seller.nickname }}</td>
+            <td>{{ reservation.buyer.nickname }}</td>
+            <td><span class="badge badge-{{ badge.get(reservation.status, 'gray') }} badge-dot">{{ reservation.status_label }}</span></td>
+            <td class="small muted">{{ reservation.created_at.strftime('%m-%d %H:%M') }}</td>
+            <td>
+              {% if reservation.status == 'confirmed' %}
+                <form method="post" action="{{ url_for('admin_reservations.arbitrate_view', reservation_id=reservation.id) }}" class="action-group">
+                  <input class="input" name="note" placeholder="仲裁说明" style="height:30px;width:110px;font-size:12px;">
+                  <button class="btn btn-primary btn-sm" type="submit" name="outcome" value="completed">判定完成</button>
+                  <button class="btn btn-danger btn-sm" type="submit" name="outcome" value="cancelled">判定取消</button>
+                </form>
+              {% else %}
+                <span class="tiny muted">等待卖家确认，暂不能仲裁</span>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <div class="empty-state">
+      <div class="big">⚖️</div>
+      <div>当前没有需要仲裁的预约</div>
+      <p class="small">已确认但买卖双方有争议的预约会出现在这里。</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

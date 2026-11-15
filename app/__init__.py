@@ -33,12 +33,20 @@ def create_app(config_object: type[Config] | None = None) -> Flask:
     from .items.routes import admin_items_bp, items_bp
     from .main.routes import main_bp
     from .market.routes import market_bp
+    from .reservations.routes import (
+        admin_reservations_bp,
+        reservations_bp,
+        seller_reservations_bp,
+    )
 
     app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp, url_prefix="/auth")
     app.register_blueprint(market_bp)
     app.register_blueprint(items_bp)
     app.register_blueprint(admin_items_bp)
+    app.register_blueprint(reservations_bp)
+    app.register_blueprint(seller_reservations_bp)
+    app.register_blueprint(admin_reservations_bp)
 
     register_error_handlers(app)
     register_cli(app)

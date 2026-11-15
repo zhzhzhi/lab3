@@ -95,7 +95,7 @@
                     <button class="btn btn-ghost btn-sm" type="submit">下架</button>
                   </form>
                 {% elif item.status in ('reserved', 'confirmed') %}
-                  <span class="badge badge-amber">处理预约（下一阶段）</span>
+                  <a class="btn btn-soft btn-sm" href="{{ url_for('seller_reservations.seller_list') }}">处理预约</a>
                 {% elif item.status == 'rejected' %}
                   <a class="btn btn-primary btn-sm" href="{{ url_for('items.edit_item', item_id=item.id) }}">修改后重新提交</a>
                 {% elif item.status == 'off_shelf' %}

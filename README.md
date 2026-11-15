@@ -34,6 +34,14 @@ black --check app tests
 | seller01 | seller12345 | 卖家 + 买家 |
 | disabled01 | disabled12345 | 已禁用买家 |
 
+## 演示流程
+
+1. `seller01` 发布商品 → 提交审核；
+2. `admin` 在“审核”页通过；
+3. `buyer01` 在商品详情页“立即预约”，商品转为已预约并锁定 48 小时；
+4. `seller01` 在“预约处理”确认，商品转为已确认；
+5. `buyer01` 在“我的预约”确认完成，商品转为已完成。
+
 ## 目录
 
 ```text
@@ -41,6 +49,7 @@ app/
 ├── auth/           # 注册、登录、锁定
 ├── common/         # 错误、权限、时钟、分页
 ├── main/           # 首页
+├── reservations/   # 预约、确认、取消、完成、失效、仲裁
 ├── models.py       # User/Category/Item/ItemImage/Reservation/Report/OperationLog/IdempotencyRecord
 ├── enums.py        # 角色与状态
 ├── templates/      # Jinja2 页面
@@ -57,7 +66,7 @@ run.py              # 开发入口
 - [x] 健康检查、初始化与种子数据
 - [x] 商品管理
 - [x] 商品查询
-- [ ] 预约与交易（下一阶段）
+- [x] 预约与交易（幂等预约、48 小时惰性失效、卖家确认/取消、买家完成、管理员仲裁）
 - [ ] 举报、用户治理、日志与统计
 - [ ] 管理后台页面
 - [ ] 代码风格与测试收尾

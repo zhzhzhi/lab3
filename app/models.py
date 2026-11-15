@@ -154,6 +154,10 @@ class Item(db.Model):
         if user is not None and getattr(user, "is_authenticated", False):
             if user.is_admin or user.id == self.seller_id:
                 return True
+            # The buyer who reserved the item may still open its detail page
+            # after the item leaves the public market (confirmed / completed).
+            if self.reservations.filter_by(buyer_id=user.id).first() is not None:
+                return True
         return self.status in (ItemStatus.PUBLISHED.value, ItemStatus.RESERVED.value)
 
     def __repr__(self) -> str:
