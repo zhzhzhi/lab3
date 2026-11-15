@@ -22,8 +22,10 @@
         <a href="{{ url_for('seller_reservations.seller_list') }}">预约处理</a>
       {% endif %}
       {% if current_user.is_authenticated and current_user.is_admin %}
+        <a href="{{ url_for('admin.dashboard') }}">管理后台</a>
         <a href="{{ url_for('admin_items.review_list') }}">审核</a>
         <a href="{{ url_for('admin_reservations.admin_list') }}">仲裁</a>
+        <a href="{{ url_for('admin_reports.review_list') }}">举报</a>
       {% endif %}
     </nav>
     <div class="user-menu">

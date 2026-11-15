@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}举报商品 · 校园二手{% endblock %}
+
+{% block content %}
+<div class="breadcrumb">
+  <a href="{{ url_for('market.list_items') }}">商品广场</a><span class="sep">/</span>
+  <a href="{{ url_for('market.detail', item_id=item.id) }}">{{ item.name }}</a><span class="sep">/</span>
+  <span>举报</span>
+</div>
+
+<div class="grid-2">
+  <div class="card panel">
+    <h1 class="detail-title">{{ item.name }}</h1>
+    <div class="detail-meta">
+      <span>{{ item.category.name }}</span><span class="dot">·</span>
+      <span>卖家 {{ item.seller.nickname }}</span>
+    </div>
+    <div class="price-lg mt-12">¥{{ "%.2f"|format(item.price) }}</div>
+    <p class="desc-text mt-12">{{ item.description }}</p>
+    <div class="alert mt-16">
+      <div>
+        <div class="alert-title">举报前请确认</div>
+        <div class="small" style="margin-top:2px;">举报用于处理虚假、违禁或与描述严重不符的商品。举报成立后商品会被下架，恶意举报会影响账号信用。</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card panel">
+    <h3 class="section-title">填写举报信息</h3>
+    <form method="post" action="{{ url_for('reports.report_item', item_id=item.id) }}">
+      <div class="field">
+        <label class="label" for="reason">举报原因（5–500 字）</label>
+        <textarea class="textarea" id="reason" name="reason" rows="6" placeholder="请描述具体问题，例如：商品已损坏、与描述不符、疑似虚假信息。">{{ reason }}</textarea>
+      </div>
+      <div class="row gap-8 mt-16">
+        <button class="btn btn-primary" type="submit">提交举报</button>
+        <a class="btn btn-ghost" href="{{ url_for('market.detail', item_id=item.id) }}">取消</a>
+      </div>
+    </form>
+    <p class="hint mt-12">提交后管理员会尽快核实，处理结果可在 <a href="{{ url_for('reports.my_reports') }}">我的举报</a> 中查看。</p>
+  </div>
+</div>
+{% endblock %}

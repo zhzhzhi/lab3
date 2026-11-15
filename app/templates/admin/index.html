@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}管理后台 · 校园二手{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1 class="page-title">管理后台</h1>
+    <p class="page-sub">商品审核、交易仲裁、举报处理与用户治理</p>
+  </div>
+  <a class="btn btn-ghost" href="{{ url_for('admin.stats') }}">统计报表</a>
+</div>
+
+<div class="stat-row">
+  <div class="stat"><div class="label">用户总数</div><div class="value">{{ stats.users.total }}</div><div class="delta">{{ stats.users.active }} 正常 · {{ stats.users.disabled }} 禁用</div></div>
+  <div class="stat"><div class="label">商品总数</div><div class="value">{{ stats['items'].total }}</div><div class="delta">在售 {{ stats['items'].by_status.get('published', 0) }}</div></div>
+  <div class="stat"><div class="label">待审核商品</div><div class="value" style="color:var(--amber);">{{ stats.pending_review }}</div><div class="delta warn">等待管理员处理</div></div>
+  <div class="stat"><div class="label">待处理举报</div><div class="value" style="color:var(--red);">{{ stats.pending_reports }}</div><div class="delta warn">核实后下架或驳回</div></div>
+</div>
+
+<div class="grid-3 mt-16">
+  <a class="card panel" href="{{ url_for('admin_items.review_list') }}">
+    <h3 class="section-title">商品审核</h3>
+    <p class="desc-text">审核卖家提交的商品，通过后自动上架，驳回需填写原因。</p>
+  </a>
+  <a class="card panel" href="{{ url_for('admin_reservations.admin_list') }}">
+    <h3 class="section-title">交易仲裁</h3>
+    <p class="desc-text">对已确认预约判定交易完成或取消，结果写入操作日志。</p>
+  </a>
+  <a class="card panel" href="{{ url_for('admin_reports.review_list') }}">
+    <h3 class="section-title">举报处理</h3>
+    <p class="desc-text">核实举报内容，成立后商品强制下架，不成立保留商品并记录。</p>
+  </a>
+  <a class="card panel" href="{{ url_for('admin.users') }}">
+    <h3 class="section-title">用户管理</h3>
+    <p class="desc-text">查询用户、禁用或恢复账号、解除登录锁定。</p>
+  </a>
+  <a class="card panel" href="{{ url_for('admin.logs') }}">
+    <h3 class="section-title">操作日志</h3>
+    <p class="desc-text">按操作人、动作类型和日期检索全量审计日志。</p>
+  </a>
+  <a class="card panel" href="{{ url_for('admin.stats') }}">
+    <h3 class="section-title">统计报表</h3>
+    <p class="desc-text">商品、预约、举报的状态分布与最近 7 天趋势。</p>
+  </a>
+</div>
+
+<div class="card panel mt-16">
+  <h3 class="section-title">最近 7 天</h3>
+  <table class="table">
+    <thead>
+      <tr><th>日期</th><th>新增商品</th><th>新增预约</th><th>完成交易</th></tr>
+    </thead>
+    <tbody>
+      {% for day in stats.recent %}
+        <tr>
+          <td>{{ day.date }}</td>
+          <td>{{ day.items }}</td>
+          <td>{{ day.reservations }}</td>
+          <td>{{ day.completed }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}统计报表 · 校园二手{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1 class="page-title">统计报表</h1>
+    <p class="page-sub">商品、预约、举报的状态分布与最近 7 天趋势</p>
+  </div>
+  <a class="btn btn-ghost" href="{{ url_for('admin.dashboard') }}">管理后台</a>
+</div>
+
+<div class="stat-row">
+  <div class="stat"><div class="label">商品总数</div><div class="value">{{ stats['items'].total }}</div><div class="delta">全部状态合计</div></div>
+  <div class="stat"><div class="label">预约总数</div><div class="value">{{ stats.reservations.total }}</div><div class="delta">含已取消与失效</div></div>
+  <div class="stat"><div class="label">完成交易</div><div class="value" style="color:var(--green-700);">{{ stats.reservations.by_status.get('completed', 0) }}</div><div class="delta">买家确认完成</div></div>
+  <div class="stat"><div class="label">举报总数</div><div class="value" style="color:var(--amber);">{{ stats.reports.total }}</div><div class="delta">待处理 {{ stats.reports.by_status.get('pending', 0) }}</div></div>
+</div>
+
+<div class="grid-2 mt-16">
+  <div class="card panel">
+    <h3 class="section-title">商品状态分布</h3>
+    {% for key, count in stats['items'].by_status.items() %}
+      {% set pct = (count * 100 / stats['items'].total) if stats['items'].total else 0 %}
+      <div class="row-between small">
+        <span>{{ stats['items'].labels.get(key, key) }}</span>
+        <span class="muted">{{ count }} 件 · {{ "%.0f"|format(pct) }}%</span>
+      </div>
+      <div class="bar"><span style="width: {{ "%.1f"|format(pct) }}%;"></span></div>
+    {% endfor %}
+  </div>
+
+  <div class="card panel">
+    <h3 class="section-title">预约状态分布</h3>
+    {% for key, count in stats.reservations.by_status.items() %}
+      {% set pct = (count * 100 / stats.reservations.total) if stats.reservations.total else 0 %}
+      <div class="row-between small">
+        <span>{{ stats.reservations.labels.get(key, key) }}</span>
+        <span class="muted">{{ count }} 条 · {{ "%.0f"|format(pct) }}%</span>
+      </div>
+      <div class="bar blue"><span style="width: {{ "%.1f"|format(pct) }}%;"></span></div>
+    {% endfor %}
+  </div>
+</div>
+
+<div class="grid-2 mt-16">
+  <div class="card panel">
+    <h3 class="section-title">举报处理情况</h3>
+    {% for key, count in stats.reports.by_status.items() %}
+      {% set pct = (count * 100 / stats.reports.total) if stats.reports.total else 0 %}
+      <div class="row-between small">
+        <span>{{ stats.reports.labels.get(key, key) }}</span>
+        <span class="muted">{{ count }} 条 · {{ "%.0f"|format(pct) }}%</span>
+      </div>
+      <div class="bar amber"><span style="width: {{ "%.1f"|format(pct) }}%;"></span></div>
+    {% endfor %}
+  </div>
+
+  <div class="card panel">
+    <h3 class="section-title">用户概况</h3>
+    <div class="status-grid">
+      <div class="status-pill"><span>用户总数</span><b>{{ stats.users.total }}</b></div>
+      <div class="status-pill"><span>正常</span><b>{{ stats.users.active }}</b></div>
+      <div class="status-pill"><span>已禁用</span><b>{{ stats.users.disabled }}</b></div>
+      <div class="status-pill"><span>管理员</span><b>{{ stats.users.admins }}</b></div>
+    </div>
+    <p class="hint mt-12">禁用用户无法登录，其历史商品与预约记录保留。</p>
+  </div>
+</div>
+
+<div class="card panel mt-16">
+  <h3 class="section-title">最近 7 天趋势</h3>
+  <table class="table">
+    <thead>
+      <tr><th>日期</th><th>新增商品</th><th>新增预约</th><th>完成交易</th><th style="width:40%;">完成交易占比</th></tr>
+    </thead>
+    <tbody>
+      {% set max_completed = stats.recent | map(attribute='completed') | max %}
+      {% for day in stats.recent %}
+        <tr>
+          <td>{{ day.date }}</td>
+          <td>{{ day.items }}</td>
+          <td>{{ day.reservations }}</td>
+          <td>{{ day.completed }}</td>
+          <td>
+            {% set pct = (day.completed * 100 / max_completed) if max_completed else 0 %}
+            <div class="bar" style="margin:0;"><span style="width: {{ "%.1f"|format(pct) }}%;"></span></div>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

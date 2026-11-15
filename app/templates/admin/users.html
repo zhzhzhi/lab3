@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}用户管理 · 校园二手{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1 class="page-title">用户管理</h1>
+    <p class="page-sub">共 {{ users | length }} 个匹配用户 · 禁用后无法登录，恢复后自动解除锁定</p>
+  </div>
+  <a class="btn btn-ghost" href="{{ url_for('admin.dashboard') }}">管理后台</a>
+</div>
+
+<form class="filter-bar" method="get" action="{{ url_for('admin.users') }}">
+  <input class="input grow" name="keyword" value="{{ filters.get('keyword', '') }}" placeholder="搜索账号或昵称">
+  <select class="select" name="role" style="width:120px;">
+    <option value="">全部角色</option>
+    <option value="buyer" {% if filters.get('role') == 'buyer' %}selected{% endif %}>买家</option>
+    <option value="seller" {% if filters.get('role') == 'seller' %}selected{% endif %}>卖家</option>
+    <option value="admin" {% if filters.get('role') == 'admin' %}selected{% endif %}>管理员</option>
+  </select>
+  <select class="select" name="status" style="width:120px;">
+    <option value="">全部状态</option>
+    <option value="active" {% if filters.get('status') == 'active' %}selected{% endif %}>正常</option>
+    <option value="disabled" {% if filters.get('status') == 'disabled' %}selected{% endif %}>已禁用</option>
+  </select>
+  <button class="btn btn-primary" type="submit" style="height:36px;">筛选</button>
+</form>
+
+<div class="card" style="overflow:hidden;">
+  {% if users %}
+    <table class="table">
+      <thead>
+        <tr>
+          <th style="width:26%;">用户</th>
+          <th>账号</th>
+          <th>角色</th>
+          <th>状态</th>
+          <th>注册时间</th>
+          <th>登录保护</th>
+          <th style="width:20%;">操作</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for user in users %}
+          <tr>
+            <td>
+              <div class="item-cell">
+                <div class="avatar">{{ user.nickname[:1] }}</div>
+                <div>
+                  <div class="t">{{ user.nickname }}</div>
+                  <div class="s">{{ user.contact or '未填写联系方式' }}</div>
+                </div>
+              </div>
+            </td>
+            <td>{{ user.account }}</td>
+            <td class="small">{{ user.role_labels | join(' / ') }}</td>
+            <td><span class="badge badge-{{ 'green' if user.status == 'active' else 'red' }} badge-dot">{{ user.status_label }}</span></td>
+            <td class="small muted">{{ user.created_at.strftime('%Y-%m-%d') }}</td>
+            <td class="small muted">
+              {% if user.locked_until %}
+                <span style="color:var(--red);">锁定至 {{ user.locked_until.strftime('%m-%d %H:%M') }}</span>
+              {% elif user.failed_attempts %}
+                {{ user.failed_attempts }} 次失败
+              {% else %}
+                —
+              {% endif %}
+            </td>
+            <td>
+              <div class="action-group">
+                {% if user.status == 'active' %}
+                  {% if not user.is_admin and user.id != current_user.id %}
+                    <form method="post" action="{{ url_for('admin.disable_user', user_id=user.id) }}">
+                      <input type="hidden" name="reason" value="管理员禁用">
+                      <button class="btn btn-danger btn-sm" type="submit">禁用</button>
+                    </form>
+                  {% else %}
+                    <span class="tiny muted">不可禁用</span>
+                  {% endif %}
+                {% else %}
+                  <form method="post" action="{{ url_for('admin.enable_user', user_id=user.id) }}">
+                    <button class="btn btn-primary btn-sm" type="submit">恢复</button>
+                  </form>
+                {% endif %}
+                {% if user.locked_until %}
+                  <form method="post" action="{{ url_for('admin.unlock', user_id=user.id) }}">
+                    <button class="btn btn-ghost btn-sm" type="submit">解锁</button>
+                  </form>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <div class="empty-state">
+      <div class="big">👤</div>
+      <div>没有匹配的用户</div>
+      <p class="small">换个关键词或筛选条件试试。</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block title %}操作日志 · 校园二手{% endblock %}
+
+{% block content %}
+{% set action_labels = {
+  'create_item': '创建商品', 'update_item': '编辑商品', 'submit_review': '提交审核',
+  'withdraw_review': '撤回审核', 'approve_item': '审核通过', 'reject_item': '审核驳回',
+  'off_shelf': '下架商品', 'to_draft': '转回草稿',
+  'create_reservation': '创建预约', 'confirm_reservation': '确认预约',
+  'seller_cancel_reservation': '卖家取消预约', 'buyer_cancel_reservation': '买家取消预约',
+  'complete_reservation': '买家确认完成', 'expire_reservation': '预约自动失效',
+  'arbitrate_reservation': '管理员仲裁',
+  'submit_report': '提交举报', 'handle_report': '处理举报',
+  'disable_user': '禁用用户', 'enable_user': '启用用户', 'unlock_user': '解除登录锁定'
+} %}
+<div class="page-head">
+  <div>
+    <h1 class="page-title">操作日志</h1>
+    <p class="page-sub">共 {{ pagination.total }} 条记录 · 日志只追加，不提供修改和删除</p>
+  </div>
+  <a class="btn btn-ghost" href="{{ url_for('admin.dashboard') }}">管理后台</a>
+</div>
+
+<form class="filter-bar" method="get" action="{{ url_for('admin.logs') }}">
+  <select class="select" name="action_type" style="width:150px;">
+    <option value="">全部动作</option>
+    {% for action in actions %}
+      <option value="{{ action }}" {% if filters.get('action_type') == action %}selected{% endif %}>{{ action_labels.get(action, action) }}</option>
+    {% endfor %}
+  </select>
+  <select class="select" name="target_type" style="width:120px;">
+    <option value="">全部对象</option>
+    {% for target in targets %}
+      <option value="{{ target }}" {% if filters.get('target_type') == target %}selected{% endif %}>{{ {'item': '商品', 'reservation': '预约', 'report': '举报', 'user': '用户'}.get(target, target) }}</option>
+    {% endfor %}
+  </select>
+  <input class="input" name="operator" value="{{ filters.get('operator', '') }}" placeholder="操作人账号/昵称" style="width:150px;">
+  <input class="input" type="date" name="date_from" value="{{ filters.get('date_from', '') }}" style="width:145px;">
+  <span class="muted">—</span>
+  <input class="input" type="date" name="date_to" value="{{ filters.get('date_to', '') }}" style="width:145px;">
+  <button class="btn btn-primary" type="submit" style="height:36px;">筛选</button>
+</form>
+
+<div class="card" style="overflow:hidden;">
+  {% if pagination.items %}
+    <table class="table">
+      <thead>
+        <tr>
+          <th>时间</th>
+          <th>操作人</th>
+          <th>动作</th>
+          <th>对象</th>
+          <th>结果</th>
+          <th style="width:32%;">详情</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for log in pagination.items %}
+          <tr>
+            <td class="small muted">{{ log.created_at.strftime('%m-%d %H:%M:%S') }}</td>
+            <td>{{ log.operator.account if log.operator else '系统' }}</td>
+            <td>{{ action_labels.get(log.action_type, log.action_type) }}</td>
+            <td class="small muted">{{ {'item': '商品', 'reservation': '预约', 'report': '举报', 'user': '用户'}.get(log.target_type, log.target_type) }}{% if log.target_id %} #{{ log.target_id }}{% endif %}</td>
+            <td><span class="badge badge-{{ 'green' if log.result == 'success' else 'red' }} badge-dot">{{ '成功' if log.result == 'success' else '失败' }}</span></td>
+            <td class="small">{{ log.detail or '—' }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <div class="empty-state">
+      <div class="big">📜</div>
+      <div>没有匹配的日志</div>
+      <p class="small">调整筛选条件后再试。</p>
+    </div>
+  {% endif %}
+</div>
+
+{% if pagination.pages > 1 %}
+  <div class="pagination">
+    {% if pagination.has_prev %}
+      <a class="page-link" href="{{ url_for('admin.logs', page=pagination.prev_num, action_type=filters.get('action_type'), target_type=filters.get('target_type'), operator=filters.get('operator'), date_from=filters.get('date_from'), date_to=filters.get('date_to'), per_page=filters.get('per_page')) }}">‹</a>
+    {% endif %}
+    {% for p in pagination.iter_pages(left_edge=1, left_current=1, right_current=2, right_edge=1) %}
+      {% if p %}
+        <a class="page-link {% if p == pagination.page %}active{% endif %}" href="{{ url_for('admin.logs', page=p, action_type=filters.get('action_type'), target_type=filters.get('target_type'), operator=filters.get('operator'), date_from=filters.get('date_from'), date_to=filters.get('date_to'), per_page=filters.get('per_page')) }}">{{ p }}</a>
+      {% else %}
+        <span class="muted">…</span>
+      {% endif %}
+    {% endfor %}
+    {% if pagination.has_next %}
+      <a class="page-link" href="{{ url_for('admin.logs', page=pagination.next_num, action_type=filters.get('action_type'), target_type=filters.get('target_type'), operator=filters.get('operator'), date_from=filters.get('date_from'), date_to=filters.get('date_to'), per_page=filters.get('per_page')) }}">›</a>
+    {% endif %}
+  </div>
+{% endif %}
+{% endblock %}

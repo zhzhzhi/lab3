@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}举报处理 · 校园二手{% endblock %}
+
+{% block content %}
+{% set badge = {'pending': 'amber', 'resolved': 'green', 'rejected': 'gray'} %}
+<div class="page-head">
+  <div>
+    <h1 class="page-title">举报处理</h1>
+    <p class="page-sub">核实举报内容，成立后商品自动下架</p>
+  </div>
+  <a class="btn btn-ghost" href="{{ url_for('admin.dashboard') }}">管理后台</a>
+</div>
+
+<div class="tabs mb-16">
+  <a class="tab {% if not selected_status %}active{% endif %}" href="{{ url_for('admin_reports.review_list') }}">全部</a>
+  <a class="tab {% if selected_status == 'pending' %}active{% endif %}" href="{{ url_for('admin_reports.review_list', status='pending') }}">待处理 {{ counts.get('pending', 0) }}</a>
+  <a class="tab {% if selected_status == 'resolved' %}active{% endif %}" href="{{ url_for('admin_reports.review_list', status='resolved') }}">成立 {{ counts.get('resolved', 0) }}</a>
+  <a class="tab {% if selected_status == 'rejected' %}active{% endif %}" href="{{ url_for('admin_reports.review_list', status='rejected') }}">不成立 {{ counts.get('rejected', 0) }}</a>
+</div>
+
+<div class="card" style="overflow:hidden;">
+  {% if reports %}
+    <table class="table">
+      <thead>
+        <tr>
+          <th style="width:22%;">商品</th>
+          <th>举报人</th>
+          <th style="width:26%;">举报原因</th>
+          <th>状态</th>
+          <th>提交时间</th>
+          <th style="width:26%;">处理</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for report in reports %}
+          <tr>
+            <td>
+              <div class="t"><a href="{{ url_for('market.detail', item_id=report.item_id) }}">{{ report.item.name }}</a></div>
+              <div class="s">卖家 {{ report.item.seller.nickname }} · {{ report.item.status_label }}</div>
+            </td>
+            <td>{{ report.reporter.nickname }}</td>
+            <td class="small">{{ report.reason }}</td>
+            <td>
+              <span class="badge badge-{{ badge.get(report.status, 'gray') }} badge-dot">{{ report.status_label }}</span>
+              {% if report.result %}
+                <div class="tiny muted mt-4">{{ report.result }}</div>
+              {% endif %}
+            </td>
+            <td class="small muted">{{ report.created_at.strftime('%m-%d %H:%M') }}</td>
+            <td>
+              {% if report.status == 'pending' %}
+                <form method="post" action="{{ url_for('admin_reports.handle', report_id=report.id) }}" class="action-group">
+                  <input class="input" name="note" placeholder="处理说明" style="height:30px;width:110px;font-size:12px;">
+                  <button class="btn btn-primary btn-sm" type="submit" name="decision" value="accept">成立并下架</button>
+                  <button class="btn btn-ghost btn-sm" type="submit" name="decision" value="reject">不成立</button>
+                </form>
+              {% else %}
+                <span class="tiny muted">{{ report.handler.nickname if report.handler else '—' }} {{ report.handled_at.strftime('%m-%d %H:%M') if report.handled_at else '' }}</span>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <div class="empty-state">
+      <div class="big">🛡️</div>
+      <div>当前没有举报记录</div>
+      <p class="small">用户举报商品后会出现在这里。</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

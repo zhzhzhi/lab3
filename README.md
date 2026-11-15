@@ -50,6 +50,8 @@ app/
 ├── common/         # 错误、权限、时钟、分页
 ├── main/           # 首页
 ├── reservations/   # 预约、确认、取消、完成、失效、仲裁
+├── reports/        # 举报提交与管理员处理
+├── admin/          # 管理后台：用户、日志、统计
 ├── models.py       # User/Category/Item/ItemImage/Reservation/Report/OperationLog/IdempotencyRecord
 ├── enums.py        # 角色与状态
 ├── templates/      # Jinja2 页面
@@ -67,6 +69,8 @@ run.py              # 开发入口
 - [x] 商品管理
 - [x] 商品查询
 - [x] 预约与交易（幂等预约、48 小时惰性失效、卖家确认/取消、买家完成、管理员仲裁）
-- [ ] 举报、用户治理、日志与统计
-- [ ] 管理后台页面
+- [x] 举报与处理（举报商品、管理员成立/不成立、成立自动下架）
+- [x] 用户治理（搜索、禁用/恢复、解除登录锁定）
+- [x] 操作日志查询与统计报表
+- [x] 管理后台页面
 - [ ] 代码风格与测试收尾

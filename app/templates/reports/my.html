@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}我的举报 · 校园二手{% endblock %}
+
+{% block content %}
+{% set badge = {'pending': 'amber', 'resolved': 'green', 'rejected': 'gray'} %}
+<div class="page-head">
+  <div>
+    <h1 class="page-title">我的举报</h1>
+    <p class="page-sub">共 {{ reports | length }} 条记录 · 管理员处理后会显示结果</p>
+  </div>
+  <a class="btn btn-ghost" href="{{ url_for('market.list_items') }}">去商品广场</a>
+</div>
+
+<div class="card" style="overflow:hidden;">
+  {% if reports %}
+    <table class="table">
+      <thead>
+        <tr>
+          <th style="width:30%;">商品</th>
+          <th style="width:34%;">举报原因</th>
+          <th>状态</th>
+          <th>处理结果</th>
+          <th>提交时间</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for report in reports %}
+          <tr>
+            <td>
+              <div class="t"><a href="{{ url_for('market.detail', item_id=report.item_id) }}">{{ report.item.name }}</a></div>
+              <div class="s">卖家 {{ report.item.seller.nickname }} · 当前{{ report.item.status_label }}</div>
+            </td>
+            <td class="small">{{ report.reason }}</td>
+            <td><span class="badge badge-{{ badge.get(report.status, 'gray') }} badge-dot">{{ report.status_label }}</span></td>
+            <td class="small">{{ report.result or '等待处理' }}</td>
+            <td class="small muted">{{ report.created_at.strftime('%m-%d %H:%M') }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <div class="empty-state">
+      <div class="big">🛡️</div>
+      <div>还没有提交过举报</div>
+      <p class="small">遇到虚假或违规商品时，可以在商品详情页举报。</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

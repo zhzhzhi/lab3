@@ -29,10 +29,24 @@ def create_app(config_object: type[Config] | None = None) -> Flask:
         except (TypeError, ValueError):
             return None
 
+    register_blueprints(app)
+    register_error_handlers(app)
+    register_cli(app)
+
+    @app.get("/health")
+    def health():
+        return jsonify({"status": "ok"})
+
+    return app
+
+
+def register_blueprints(app: Flask) -> None:
+    from .admin.routes import admin_bp
     from .auth.routes import auth_bp
     from .items.routes import admin_items_bp, items_bp
     from .main.routes import main_bp
     from .market.routes import market_bp
+    from .reports.routes import admin_reports_bp, reports_bp
     from .reservations.routes import (
         admin_reservations_bp,
         reservations_bp,
@@ -47,15 +61,9 @@ def create_app(config_object: type[Config] | None = None) -> Flask:
     app.register_blueprint(reservations_bp)
     app.register_blueprint(seller_reservations_bp)
     app.register_blueprint(admin_reservations_bp)
-
-    register_error_handlers(app)
-    register_cli(app)
-
-    @app.get("/health")
-    def health():
-        return jsonify({"status": "ok"})
-
-    return app
+    app.register_blueprint(reports_bp)
+    app.register_blueprint(admin_reports_bp)
+    app.register_blueprint(admin_bp)
 
 
 def register_error_handlers(app: Flask) -> None:
