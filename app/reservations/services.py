@@ -226,17 +226,8 @@ def seller_confirm(seller, reservation_id: int) -> Reservation:
     reservation = _load_reservation(reservation_id)
     if reservation.item.seller_id != seller.id:
         raise BusinessError("只能处理自己商品的预约。", status_code=403)
-    if (
-        reservation.status == ReservationStatus.PENDING.value
-        and reservation.expires_at < clock.now()
-    ):
-        _expire_single(reservation)
-        db.session.commit()
-        raise BusinessError(
-            "预约已超过 48 小时，已自动失效。",
-            current_state="已失效",
-            next_step="让买家重新发起预约。",
-        )
+    # expire_overdue() above has already expired anything past its deadline,
+    # so a stale pending reservation cannot reach this point.
     _require_status(reservation, (ReservationStatus.PENDING.value,), "确认预约")
     reservation.status = ReservationStatus.CONFIRMED.value
     reservation.seller_handled_at = clock.now()

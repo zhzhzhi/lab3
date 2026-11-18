@@ -136,3 +136,38 @@ def test_report_routes(client, app):
         data={"decision": "accept", "note": "核实属实"},
     )
     assert report.status == ReportStatus.RESOLVED.value
+
+
+def test_accept_report_after_item_already_off_shelf(app):
+    from app.items.services import off_shelf
+
+    _, reporter, admin, item = _setup()
+    report = submit_report(reporter, item.id, "商品实物与描述严重不符")
+
+    off_shelf(item.seller, item.id, "卖家自行下架")
+    handle_report(admin, report.id, accepted=True, note="核实属实")
+
+    saved = db.session.get(Item, item.id)
+    assert saved.status == ItemStatus.OFF_SHELF.value
+    assert "举报成立" in saved.off_shelf_reason
+
+
+def test_accept_report_keeps_completed_item_status(app):
+    _, reporter, admin, item = _setup()
+    report = submit_report(reporter, item.id, "商品实物与描述严重不符")
+
+    item.status = ItemStatus.COMPLETED.value
+    db.session.commit()
+
+    handle_report(admin, report.id, accepted=True, note="核实属实")
+
+    assert db.session.get(Item, item.id).status == ItemStatus.COMPLETED.value
+
+
+def test_report_route_renders_validation_error(client, app):
+    _, reporter, _, item = _setup()
+    _login(client, "reporter")
+
+    response = client.post(f"/reports/item/{item.id}", data={"reason": "短"})
+    assert response.status_code == 400
+    assert "5–500" in response.get_data(as_text=True)

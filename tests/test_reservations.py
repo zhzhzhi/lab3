@@ -101,6 +101,26 @@ def test_seller_confirm_moves_item_to_confirmed(app):
     assert db.session.get(Item, item.id).status == ItemStatus.CONFIRMED.value
 
 
+def test_concurrent_reservation_conflict_is_reported(app):
+    seller, buyer, other, item = _marketplace()
+    # Simulate another buyer winning the race: an active row exists while the
+    # item row still reads as published for the request being served.
+    db.session.add(
+        Reservation(
+            item_id=item.id,
+            buyer_id=other.id,
+            request_id="race-first",
+            status=ReservationStatus.PENDING.value,
+            expires_at=utcnow() + timedelta(hours=48),
+        )
+    )
+    db.session.commit()
+
+    with pytest.raises(BusinessError) as excinfo:
+        create_reservation(buyer, item.id, "race-second")
+    assert "其他买家" in excinfo.value.message
+
+
 def test_idempotency_window_purges_old_records(app):
     _, buyer, _, item = _marketplace()
     first, _ = create_reservation(buyer, item.id, "req-stale")
