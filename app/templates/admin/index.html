@@ -54,7 +54,7 @@
       {% for day in stats.recent %}
         <tr>
           <td>{{ day.date }}</td>
-          <td>{{ day.items }}</td>
+          <td>{{ day['items'] }}</td>
           <td>{{ day.reservations }}</td>
           <td>{{ day.completed }}</td>
         </tr>

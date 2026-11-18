@@ -417,7 +417,16 @@ def test_admin_logs_and_stats_routes(client, app):
     )
     response = client.get("/admin/logs/?date_from=bad-date")
     assert response.status_code == 302
-    assert client.get("/admin/stats/").status_code == 200
+
+    stats_page = client.get("/admin/stats/")
+    assert stats_page.status_code == 200
+    body = stats_page.get_data(as_text=True)
+    # Regression: dict keys named ``items`` must not resolve to dict.items().
+    assert "built-in method" not in body
+
+    dashboard = client.get("/admin/")
+    assert dashboard.status_code == 200
+    assert "built-in method" not in dashboard.get_data(as_text=True)
 
 
 def test_health_and_cli_commands(app, client):

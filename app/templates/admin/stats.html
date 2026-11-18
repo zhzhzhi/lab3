@@ -20,25 +20,29 @@
 <div class="grid-2 mt-16">
   <div class="card panel">
     <h3 class="section-title">商品状态分布</h3>
+    {% set max_count = stats['items'].by_status.values() | max %}
     {% for key, count in stats['items'].by_status.items() %}
       {% set pct = (count * 100 / stats['items'].total) if stats['items'].total else 0 %}
+      {% set width = (count * 100 / max_count) if max_count else 0 %}
       <div class="row-between small">
         <span>{{ stats['items'].labels.get(key, key) }}</span>
         <span class="muted">{{ count }} 件 · {{ "%.0f"|format(pct) }}%</span>
       </div>
-      <div class="bar"><span style="width: {{ "%.1f"|format(pct) }}%;"></span></div>
+      <div class="bar"><span style="width: {{ "%.1f"|format(width) }}%;"></span></div>
     {% endfor %}
   </div>
 
   <div class="card panel">
     <h3 class="section-title">预约状态分布</h3>
+    {% set max_count = stats.reservations.by_status.values() | max %}
     {% for key, count in stats.reservations.by_status.items() %}
       {% set pct = (count * 100 / stats.reservations.total) if stats.reservations.total else 0 %}
+      {% set width = (count * 100 / max_count) if max_count else 0 %}
       <div class="row-between small">
         <span>{{ stats.reservations.labels.get(key, key) }}</span>
         <span class="muted">{{ count }} 条 · {{ "%.0f"|format(pct) }}%</span>
       </div>
-      <div class="bar blue"><span style="width: {{ "%.1f"|format(pct) }}%;"></span></div>
+      <div class="bar blue"><span style="width: {{ "%.1f"|format(width) }}%;"></span></div>
     {% endfor %}
   </div>
 </div>
@@ -46,13 +50,15 @@
 <div class="grid-2 mt-16">
   <div class="card panel">
     <h3 class="section-title">举报处理情况</h3>
+    {% set max_count = stats.reports.by_status.values() | max %}
     {% for key, count in stats.reports.by_status.items() %}
       {% set pct = (count * 100 / stats.reports.total) if stats.reports.total else 0 %}
+      {% set width = (count * 100 / max_count) if max_count else 0 %}
       <div class="row-between small">
         <span>{{ stats.reports.labels.get(key, key) }}</span>
         <span class="muted">{{ count }} 条 · {{ "%.0f"|format(pct) }}%</span>
       </div>
-      <div class="bar amber"><span style="width: {{ "%.1f"|format(pct) }}%;"></span></div>
+      <div class="bar amber"><span style="width: {{ "%.1f"|format(width) }}%;"></span></div>
     {% endfor %}
   </div>
 
@@ -79,7 +85,7 @@
       {% for day in stats.recent %}
         <tr>
           <td>{{ day.date }}</td>
-          <td>{{ day.items }}</td>
+          <td>{{ day['items'] }}</td>
           <td>{{ day.reservations }}</td>
           <td>{{ day.completed }}</td>
           <td>
